@@ -1,0 +1,45 @@
+name: Check Temperature and Post to Bluesky
+
+on:
+  schedule:
+    # UTC基準。10分おきに実行（JSTで言うと常に10分おき）
+    - cron: "*/10 * * * *"
+  workflow_dispatch: {}  # 手動実行用（動作確認に使う）
+
+permissions:
+  contents: write  # state.json をコミットし直すために必要
+
+jobs:
+  check-and-post:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run temperature check
+        env:
+          BLUESKY_IDENTIFIER: ${{ secrets.BLUESKY_IDENTIFIER }}
+          BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
+        run: python check_and_post.py
+
+      - name: Commit updated state if changed
+        run: |
+          git config user.name "temp-bot"
+          git config user.email "temp-bot@users.noreply.github.com"
+          if ! git diff --quiet -- state.json; then
+            git add state.json
+            git commit -m "Update state.json [skip ci]"
+            git push
+          else
+            echo "state.json に変更なし。コミットしません。"
+          fi
