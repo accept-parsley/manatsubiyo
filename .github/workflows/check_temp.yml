@@ -2,8 +2,8 @@ name: Check Temperature and Post to Bluesky
 
 on:
   schedule:
-    # UTC基準。10分おきに実行（JSTで言うと常に10分おき）
-    - cron: "*/10 * * * *"
+    # 毎時17分に実行（毎時0分はGitHub Actions全体で混雑しやすいため避けている）
+    - cron: "17 * * * *"
   workflow_dispatch: {}  # 手動実行用（動作確認に使う）
 
 permissions:
